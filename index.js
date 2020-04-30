@@ -1,6 +1,30 @@
 const express = require("express");
+var morgan = require("morgan");
 const app = express();
 app.use(express.json());
+
+morgan.token("postR", function (req, res) {
+  return JSON.stringify(req.body);
+});
+
+app.use(
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms :postR",
+    {
+      skip: function (req, res) {
+        return req.method !== "POST";
+      },
+    }
+  )
+);
+
+app.use(
+  morgan(":method :url :status :res[content-length] - :response-time ms", {
+    skip: function (req, res) {
+      return req.method === "POST";
+    },
+  })
+);
 
 let persons = [
   {
@@ -34,8 +58,6 @@ app.get("/api/persons/:id", (req, res) => {
 
 app.delete("/api/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-  console.log("persons", persons);
-  console.log("id", id);
   persons = persons.filter((p) => p.id !== id);
 
   res.status(204).end();
@@ -58,10 +80,7 @@ app.post("/api/persons", (req, res) => {
     number: person.number,
     id: getNewId(),
   };
-  console.log("newPerson", newPerson);
-  console.log("persons", persons);
   persons = persons.concat(newPerson);
-  console.log("persons", persons);
   res.json(newPerson);
 });
 
