@@ -1,24 +1,25 @@
+/* eslint-disable no-console */
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
 const express = require("express");
-var morgan = require("morgan");
+const morgan = require("morgan");
+
 const app = express();
 const cors = require("cors");
+
 app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
 const Person = require("./models/person");
 
-morgan.token("postR", function (req, res) {
-  return JSON.stringify(req.body);
-});
+morgan.token("postR", (req, res) => JSON.stringify(req.body));
 
 app.use(
   morgan(
     ":method :url :status :res[content-length] - :response-time ms :postR",
     {
-      skip: function (req, res) {
+      skip(req, res) {
         return req.method !== "POST";
       },
     }
@@ -27,7 +28,7 @@ app.use(
 
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms", {
-    skip: function (req, res) {
+    skip(req, res) {
       return req.method === "POST";
     },
   })
@@ -36,7 +37,8 @@ app.use(
 const errorHandler = (error, req, res, next) => {
   if (error.name === "CastError") {
     return res.status(400).send({ error: "malformatted id" });
-  } else if (error.name === "ValidationError") {
+  }
+  if (error.name === "ValidationError") {
     return res.status(400).json({ error: error.message });
   }
   next(error);
@@ -59,7 +61,7 @@ app.get("/api/persons/:id", (req, res) => {
 // DELETE ONE PERSON
 app.delete("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
-    .then((result) => {
+    .then(() => {
       res.status(204).end();
     })
     .catch((error) => next(error));
@@ -67,8 +69,8 @@ app.delete("/api/persons/:id", (req, res, next) => {
 
 // CHANGE ONE PERSON
 app.put("/api/persons/:id", (req, res, next) => {
-  const body = req.body;
-  newPerson = {
+  const { body } = req;
+  const newPerson = {
     name: body.name,
     number: body.number,
   };
@@ -112,7 +114,7 @@ app.get("/api/info", (req, res) => {
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT;
+const { PORT } = process.env;
 app.listen(PORT, () => {
   console.log(`Server runin on port ${PORT}`);
 });

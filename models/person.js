@@ -1,5 +1,9 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-console */
 const mongoose = require("mongoose");
 const uniqueValidator = require("mongoose-unique-validator");
+
 mongoose.set("useFindAndModify", false);
 const url = process.env.MONGODB_URI;
 
@@ -11,7 +15,7 @@ mongoose
     useUnifiedTopology: true,
     useCreateIndex: true,
   })
-  .then((result) => {
+  .then(() => {
     console.log("Connected to MongoDB");
   })
   .catch((error) => {
@@ -36,6 +40,7 @@ personSchema.plugin(uniqueValidator);
 
 personSchema.set("toJSON", {
   transform: (document, returnedObject) => {
+    // eslint-disable-next-line no-underscore-dangle
     returnedObject.id = returnedObject._id.toString();
     delete returnedObject._id;
     delete returnedObject.__v;
