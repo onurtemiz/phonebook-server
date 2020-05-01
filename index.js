@@ -32,15 +32,13 @@ app.use(
 );
 
 const errorHandler = (error, req, res, next) => {
-  console.error(error.message);
-
   if (error.name === "CastError") {
     return res.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
   }
   next(error);
 };
-
-app.use(errorHandler);
 
 // GET ALL PEOPLE
 app.get("/api/persons", (req, res) => {
@@ -81,29 +79,24 @@ app.put("/api/persons/:id", (req, res, next) => {
 });
 
 // ADD A NEW PERSON
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const person = req.body;
   if (!person.name || !person.number) {
     return res.status(400).json({
       error: "name or number missing",
     });
   }
-  // else if (persons.filter((p) => p.name === person.name).length > 0) {
-  //   console.log("buldu");
-  //   Person.find({ name: `${person.name}` })
-  //     .then((person) => {
-  //       console.log("person", person);
-  //     })
-  //     .catch((error) => next(error));
-  // }
 
   const newPerson = new Person({
     name: person.name,
     number: person.number,
   });
-  newPerson.save().then((savedNote) => {
-    res.json(savedNote.toJSON());
-  });
+  newPerson
+    .save()
+    .then((savedNote) => {
+      res.json(savedNote.toJSON());
+    })
+    .catch((error) => next(error));
 });
 
 // INFO PAGE
@@ -111,10 +104,11 @@ app.get("/api/info", (req, res) => {
   Person.collection.countDocuments().then((result) => {
     const lenInfo = `<p>Phonebook has info for 
   ${result} people</p><p>${new Date().toString()}</p>`;
-
     res.send(lenInfo);
   });
 });
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
